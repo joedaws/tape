@@ -51,7 +51,7 @@ initTape txt cursorInt = Tape{
     (leftText', rightText') = T.splitAt cursorInt txt
 
 defaultWidth :: Int
-defaultWidth = 41
+defaultWidth = 11
 
 -- n = 14
 -- exmample: width = 10, cursorInt = 3, text = "hello it is me"

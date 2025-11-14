@@ -1,5 +1,6 @@
 module TapeSpec (spec) where
 
+import Control.Lens (view)
 import Data.Text as T
 import Tape
 import Test.Hspec
@@ -10,6 +11,9 @@ simpleText = T.pack "hello it is me"
 
 mkTp :: Int -> Tape
 mkTp = initTape simpleText
+
+getText :: Tape -> T.Text
+getText t = view leftText t `T.append` view rightText t
 
 spec :: Spec
 spec = do
