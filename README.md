@@ -2,6 +2,10 @@
 
 Freewrite and flow write with the tape TUI
 
+
+https://github.com/user-attachments/assets/99ae9710-b653-471b-9224-d3db31e22e79
+
+
 ## Getting started
 
 Install with
