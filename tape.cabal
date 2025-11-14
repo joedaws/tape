@@ -1,0 +1,98 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           tape
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/joedaws/tape#readme>
+homepage:       https://github.com/joedaws/tape#readme
+bug-reports:    https://github.com/joedaws/tape/issues
+author:         Joseph Daws, Jr.
+maintainer:     jozzef@hey.com
+copyright:      2025
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/joedaws/tape
+
+library
+  exposed-modules:
+      Deck
+      Document
+      Lib
+      Tape
+  other-modules:
+      Paths_tape
+  autogen-modules:
+      Paths_tape
+  hs-source-dirs:
+      src
+  ghc-options: -threaded -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , brick
+    , hspec
+    , lens
+    , microlens
+    , microlens-mtl
+    , microlens-th
+    , text
+    , vty
+    , vty-crossplatform
+  default-language: Haskell2010
+
+executable tape
+  main-is: Main.hs
+  other-modules:
+      Paths_tape
+  autogen-modules:
+      Paths_tape
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , brick
+    , hspec
+    , lens
+    , microlens
+    , microlens-mtl
+    , microlens-th
+    , tape
+    , text
+    , vty
+    , vty-crossplatform
+  default-language: Haskell2010
+
+test-suite tape-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      TapeSpec
+      Paths_tape
+  autogen-modules:
+      Paths_tape
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , brick
+    , hspec
+    , lens
+    , microlens
+    , microlens-mtl
+    , microlens-th
+    , tape
+    , text
+    , vty
+    , vty-crossplatform
+  default-language: Haskell2010
