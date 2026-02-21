@@ -1,17 +1,18 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Tape
-  ( Tape(..),
+  ( Tape (..),
     initTape,
     width,
     leftText,
     rightText,
     printTape,
+    tapeText,
     insert,
     backspace,
     delete,
     forward,
-    rewind
+    rewind,
   )
 where
 
@@ -37,21 +38,26 @@ data Tape = Tape
   { _width :: Int,
     _leftText :: T.Text,
     _rightText :: T.Text
-  } deriving (Eq, Show)
+  }
+  deriving (Eq, Show)
 
 makeLenses ''Tape
 
 initTape :: T.Text -> Int -> Tape
-initTape txt cursorInt = Tape{
-  _width=defaultWidth,
-  _leftText=leftText',
-  _rightText=rightText'
-               }
+initTape txt cursorInt =
+  Tape
+    { _width = defaultWidth,
+      _leftText = leftText',
+      _rightText = rightText'
+    }
   where
     (leftText', rightText') = T.splitAt cursorInt txt
 
 defaultWidth :: Int
 defaultWidth = 11
+
+tapeText :: Tape -> T.Text
+tapeText t = view leftText t `T.append` view rightText t
 
 -- n = 14
 -- exmample: width = 10, cursorInt = 3, text = "hello it is me"
@@ -100,16 +106,16 @@ forward :: Tape -> Tape
 forward t =
   case T.uncons (view rightText t) of
     Just (c, rest) ->
-      let t'  = over leftText (`T.snoc` c) t
+      let t' = over leftText (`T.snoc` c) t
           t'' = set rightText rest t'
-      in t''
+       in t''
     Nothing -> t
 
 rewind :: Tape -> Tape
 rewind t =
   case T.unsnoc (view leftText t) of
     Just (rest, c) ->
-      let t'  = over rightText (T.cons c) t
+      let t' = over rightText (T.cons c) t
           t'' = set leftText rest t'
-      in t''
+       in t''
     Nothing -> t

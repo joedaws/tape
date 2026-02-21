@@ -67,3 +67,9 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - tape
+
+  lint:
+    main:                HLint.hs
+    source-dirs:         lint
+    dependencies:
+    - hlint

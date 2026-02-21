@@ -27,7 +27,7 @@ library
   exposed-modules:
       Deck
       Document
-      Lib
+      Event
       Tape
   other-modules:
       Paths_tape
@@ -67,6 +67,30 @@ executable tape
     , microlens-mtl
     , microlens-th
     , tape
+    , text
+    , vty
+    , vty-crossplatform
+  default-language: Haskell2010
+
+test-suite lint
+  type: exitcode-stdio-1.0
+  main-is: HLint.hs
+  other-modules:
+      Paths_tape
+  autogen-modules:
+      Paths_tape
+  hs-source-dirs:
+      lint
+  ghc-options: -threaded -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , brick
+    , hlint
+    , hspec
+    , lens
+    , microlens
+    , microlens-mtl
+    , microlens-th
     , text
     , vty
     , vty-crossplatform

@@ -31,3 +31,4 @@ The prompt can then be overwritten by the new typing. This infuses new ideas int
 
 ### Decoration of the Deck
 The tape are in a tape deck. Add some unicode to make it look like that.
+Show a little picture of a turning cassette so the user can see where to go next or where they are in the tape.
