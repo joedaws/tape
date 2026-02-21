@@ -1,0 +1,65 @@
+# .github/workflows/release.yml
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            os: linux
+            arch: x86_64
+            artifact: tape-linux-x86_64.tar.gz
+          # Uncomment when ready to add macOS support:
+          # - runner: macos-14
+          #   os: macos
+          #   arch: aarch64
+          #   artifact: tape-macos-aarch64.tar.gz
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GHC and Stack
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.7'
+          enable-stack: true
+          stack-version: 'latest'
+
+      - name: Cache Stack global store
+        uses: actions/cache@v4
+        with:
+          path: ~/.stack
+          key: stack-global-${{ matrix.os }}-lts-22.44-${{ hashFiles('stack.yaml.lock') }}
+          restore-keys: |
+            stack-global-${{ matrix.os }}-lts-22.44-
+
+      - name: Cache .stack-work
+        uses: actions/cache@v4
+        with:
+          path: .stack-work
+          key: stack-work-${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('stack.yaml.lock', 'package.yaml') }}
+          restore-keys: |
+            stack-work-${{ matrix.os }}-${{ matrix.arch }}-
+
+      - name: Build release binary
+        run: stack build --no-terminal --copy-bins --local-bin-path ./bin tape:exe:tape
+
+      - name: Package artifact
+        run: tar -czf "${{ matrix.artifact }}" -C ./bin tape
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}

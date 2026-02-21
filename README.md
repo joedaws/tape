@@ -15,6 +15,15 @@ stack install
 
 Once installed launch with `tape`.
 
+## Releasing a new version
+
+1. Merge all changes to `main` and ensure tests pass (`stack test`).
+2. On GitHub, go to **Releases → Draft a new release**.
+3. Create a new tag (e.g. `v0.2.0`) targeting `main`.
+4. Write release notes, then click **Publish release**.
+
+The [Release workflow](.github/workflows/release.yml) will automatically build the Linux binary and attach `tape-linux-x86_64.tar.gz` to the release. First run takes 30–45 minutes due to cache warming; subsequent releases are faster.
+
 ## Feature ideas
 
 ### Timer for doing fixed amount of time sessions
