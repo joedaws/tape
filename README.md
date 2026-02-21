@@ -15,6 +15,18 @@ stack install
 
 Once installed launch with `tape`.
 
+## Timed sessions
+
+Start a timed session with the `-t` flag followed by the number of minutes:
+
+```
+tape -t 10
+```
+
+A countdown timer appears at the top of the screen in green. When time expires it turns red and displays "Time's up!" — but the session keeps running so you can finish your thought. Press `Esc` to quit as usual.
+
+Invalid or zero values for `-t` are silently ignored and tape starts without a timer.
+
 ## Releasing a new version
 
 1. Bump `version` in `package.yaml` (e.g. `0.2.0.0`) and merge all changes to `main`. Ensure tests pass (`stack test`).
@@ -25,8 +37,6 @@ Once installed launch with `tape`.
 The [Release workflow](.github/workflows/release.yml) will automatically build the Linux binary and attach `tape-linux-x86_64.tar.gz` to the release. First run takes 30–45 minutes due to cache warming; subsequent releases are faster.
 
 ## Feature ideas
-
-### Timer for doing fixed amount of time sessions
 
 ### Timed topics
 After a certain number of seconds, a prompt appears to the right of the fixed center cursor.

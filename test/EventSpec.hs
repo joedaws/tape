@@ -53,6 +53,15 @@ spec = do
           st2' = modifyFocusedTapeSt (\t -> Tape.insert t 'x') st2
       tapeText (_tapes st2' !! 0) `shouldBe` ""
       tapeText (_tapes st2' !! 1) `shouldBe` "x"
+  describe "tickTimer" $ do
+    it "does nothing when no timer" $
+      _timerSecs (tickTimer stNoTimer) `shouldBe` Nothing
+    it "decrements positive timer" $
+      _timerSecs (tickTimer (stWithTimer 60)) `shouldBe` Just 59
+    it "holds at zero (no underflow)" $
+      _timerSecs (tickTimer (stWithTimer 0)) `shouldBe` Just 0
   where
-    st40 = initialState { _termHeight = 40 }
-    st5  = initialState { _termHeight = 5 }
+    st40        = initialState { _termHeight = 40 }
+    st5         = initialState { _termHeight = 5 }
+    stWithTimer n = initialState { _timerSecs = Just n }
+    stNoTimer   = initialState { _timerSecs = Nothing }

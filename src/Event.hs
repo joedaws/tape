@@ -5,17 +5,20 @@
 
 module Event
   ( appEvent,
+    AppEvent (..),
     Name (..),
     St (..),
     tapes,
     focusIdx,
     termHeight,
     statusMsg,
+    timerSecs,
     modifyFocusedTape,
     addTapeToSt,
     focusNextSt,
     focusPrevSt,
     modifyFocusedTapeSt,
+    tickTimer,
     calcMaxTapes,
     initialState,
     keyQuit,
@@ -37,6 +40,9 @@ import Lens.Micro.Mtl
 import Lens.Micro.TH
 import Tape
 
+data AppEvent = Tick
+  deriving (Eq, Show)
+
 newtype Name = Edit Int
   deriving (Ord, Show, Eq)
 
@@ -44,7 +50,8 @@ data St = St
   { _tapes      :: [Tape],
     _focusIdx   :: Int,
     _termHeight :: Int,
-    _statusMsg  :: Maybe DT.Text
+    _statusMsg  :: Maybe DT.Text,
+    _timerSecs  :: Maybe Int
   }
 
 makeLenses ''St
@@ -111,10 +118,19 @@ initialState = St
   { _tapes      = [initTape "" 0],
     _focusIdx   = 0,
     _termHeight = 24,
-    _statusMsg  = Nothing
+    _statusMsg  = Nothing,
+    _timerSecs  = Nothing
   }
 
-appEvent :: T.BrickEvent Name e -> T.EventM Name St ()
+tickTimer :: St -> St
+tickTimer st =
+  case _timerSecs st of
+    Nothing -> st
+    Just 0  -> st
+    Just n  -> st { _timerSecs = Just (n - 1) }
+
+appEvent :: T.BrickEvent Name AppEvent -> T.EventM Name St ()
+appEvent (T.AppEvent Tick)                                  = T.modify tickTimer
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyQuit        = M.halt
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyNextTape    = T.modify focusNextSt
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyPrevTape    = T.modify focusPrevSt
