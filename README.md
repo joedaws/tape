@@ -17,7 +17,7 @@ Once installed launch with `tape`.
 
 ## Releasing a new version
 
-1. Merge all changes to `main` and ensure tests pass (`stack test`).
+1. Bump `version` in `package.yaml` (e.g. `0.2.0.0`) and merge all changes to `main`. Ensure tests pass (`stack test`).
 2. On GitHub, go to **Releases → Draft a new release**.
 3. Create a new tag (e.g. `v0.2.0`) targeting `main`.
 4. Write release notes, then click **Publish release**.
