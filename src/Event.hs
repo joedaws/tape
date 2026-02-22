@@ -13,14 +13,18 @@ module Event
     termHeight,
     statusMsg,
     timerSecs,
+    reelRotation,
+    wordGoal,
     modifyFocusedTape,
     addTapeToSt,
     focusNextSt,
     focusPrevSt,
     modifyFocusedTapeSt,
     tickTimer,
+    advanceReel,
     calcMaxTapes,
     initialState,
+    wordCountTape,
     keyQuit,
     keyNextTape,
     keyPrevTape,
@@ -33,9 +37,9 @@ import qualified Brick.Main as M
 import qualified Brick.Types as T
 import Data.Char (isPrint)
 import qualified Data.Text as DT
-import Deck (tapeWidth)
+import Deck (cassetteRows, tapeWidth)
 import qualified Graphics.Vty as V
-import Lens.Micro ((.~))
+import Lens.Micro ((.~), (%~))
 import Lens.Micro.Mtl
 import Lens.Micro.TH
 import Tape
@@ -47,11 +51,13 @@ newtype Name = Edit Int
   deriving (Ord, Show, Eq)
 
 data St = St
-  { _tapes      :: [Tape],
-    _focusIdx   :: Int,
-    _termHeight :: Int,
-    _statusMsg  :: Maybe DT.Text,
-    _timerSecs  :: Maybe Int
+  { _tapes        :: [Tape],
+    _focusIdx     :: Int,
+    _termHeight   :: Int,
+    _statusMsg    :: Maybe DT.Text,
+    _timerSecs    :: Maybe Int,
+    _reelRotation :: Int,
+    _wordGoal     :: Maybe Int
   }
 
 makeLenses ''St
@@ -67,12 +73,16 @@ keyDelete      :: V.Key;  keyDelete      = V.KDel
 keyCursorLeft  :: V.Key;  keyCursorLeft  = V.KLeft
 keyCursorRight :: V.Key;  keyCursorRight = V.KRight
 
--- Screen capacity constants
-rowsPerTape    :: Int; rowsPerTape    = 2
-uiOverheadRows :: Int; uiOverheadRows = 3
+-- Screen capacity
+uiOverheadRows :: Int
+uiOverheadRows = 2
 
 calcMaxTapes :: Int -> Int
-calcMaxTapes termH = max 1 ((termH - uiOverheadRows) `div` rowsPerTape)
+calcMaxTapes termH = max 1 ((termH - uiOverheadRows) `div` cassetteRows)
+
+-- | Word count for a tape
+wordCountTape :: Tape -> Int
+wordCountTape = length . DT.words . tapeText
 
 -- Pure state helpers
 addTapeToSt :: St -> St
@@ -113,13 +123,19 @@ modifyFocusedTapeSt f st
 modifyFocusedTape :: (Tape -> Tape) -> T.EventM Name St ()
 modifyFocusedTape f = T.modify (modifyFocusedTapeSt f)
 
+-- | Advance the reel animation by one frame
+advanceReel :: St -> St
+advanceReel = reelRotation %~ (\r -> succ r `mod` 4)
+
 initialState :: St
 initialState = St
-  { _tapes      = [initTape "" 0],
-    _focusIdx   = 0,
-    _termHeight = 24,
-    _statusMsg  = Nothing,
-    _timerSecs  = Nothing
+  { _tapes        = [initTape "" 0],
+    _focusIdx     = 0,
+    _termHeight   = 24,
+    _statusMsg    = Nothing,
+    _timerSecs    = Nothing,
+    _reelRotation = 0,
+    _wordGoal     = Nothing
   }
 
 tickTimer :: St -> St
@@ -136,8 +152,12 @@ appEvent (T.VtyEvent (V.EvKey k [])) | k == keyNextTape    = T.modify focusNextS
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyPrevTape    = T.modify focusPrevSt
 appEvent (T.VtyEvent (V.EvKey k ms)) | k == keyAddTape
                                      , ms == modAddTape    = T.modify addTapeToSt
-appEvent (T.VtyEvent (V.EvKey k [])) | k == keyBackspace   = modifyFocusedTape backspace
-appEvent (T.VtyEvent (V.EvKey k [])) | k == keyDelete      = modifyFocusedTape delete
+appEvent (T.VtyEvent (V.EvKey k [])) | k == keyBackspace   = do
+  modifyFocusedTape backspace
+  T.modify advanceReel
+appEvent (T.VtyEvent (V.EvKey k [])) | k == keyDelete      = do
+  modifyFocusedTape delete
+  T.modify advanceReel
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyCursorLeft  = modifyFocusedTape rewind
 appEvent (T.VtyEvent (V.EvKey k [])) | k == keyCursorRight = modifyFocusedTape forward
 appEvent (T.VtyEvent (V.EvResize w h)) = do
@@ -145,5 +165,7 @@ appEvent (T.VtyEvent (V.EvResize w h)) = do
   let tw = tapeWidth w
   tapes %= fmap (width .~ tw)
 appEvent (T.VtyEvent (V.EvKey (V.KChar c) []))
-  | isPrint c = modifyFocusedTape (`insert` c)
+  | isPrint c = do
+    modifyFocusedTape (`insert` c)
+    T.modify advanceReel
 appEvent _ = return ()

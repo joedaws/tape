@@ -16,12 +16,12 @@ spec = do
   describe "calcMaxTapes" $ do
     it "returns 1 for a very short terminal" $
       calcMaxTapes 5 `shouldBe` 1
-    it "returns correct value for normal height" $
-      -- (25 - 3) `div` 2 = 11
-      calcMaxTapes 25 `shouldBe` 11
-    it "returns correct value for small height" $
-      -- (7 - 3) `div` 2 = 2
-      calcMaxTapes 7 `shouldBe` 2
+    it "returns correct value for height 24" $
+      -- (24 - 2) `div` 11 = 2
+      calcMaxTapes 24 `shouldBe` 2
+    it "returns correct value for height 40" $
+      -- (40 - 2) `div` 11 = 3
+      calcMaxTapes 40 `shouldBe` 3
 
   describe "addTapeToSt" $ do
     it "adds a tape below existing ones" $
@@ -53,6 +53,7 @@ spec = do
           st2' = modifyFocusedTapeSt (\t -> Tape.insert t 'x') st2
       tapeText (_tapes st2' !! 0) `shouldBe` ""
       tapeText (_tapes st2' !! 1) `shouldBe` "x"
+
   describe "tickTimer" $ do
     it "does nothing when no timer" $
       _timerSecs (tickTimer stNoTimer) `shouldBe` Nothing
@@ -60,6 +61,13 @@ spec = do
       _timerSecs (tickTimer (stWithTimer 60)) `shouldBe` Just 59
     it "holds at zero (no underflow)" $
       _timerSecs (tickTimer (stWithTimer 0)) `shouldBe` Just 0
+
+  describe "advanceReel" $ do
+    it "increments reelRotation from 0 to 1" $
+      _reelRotation (advanceReel initialState) `shouldBe` 1
+    it "wraps reelRotation from 3 to 0" $
+      _reelRotation (advanceReel (initialState { _reelRotation = 3 })) `shouldBe` 0
+
   where
     st40        = initialState { _termHeight = 40 }
     st5         = initialState { _termHeight = 5 }

@@ -1,12 +1,17 @@
 # tape
 
-Freewrite and flow write with the tape TUI
-
-
-https://github.com/user-attachments/assets/99ae9710-b653-471b-9224-d3db31e22e79
-
+Freewrite with the tape TUI
 
 ## Getting started
+
+### Prebuilt Binary
+
+Download the latest release form the Releases tab. Only Linux supported at this time.
+
+### build from source
+
+Cloning this repo and then building the project is another way to get
+the project. You'll need haskell's Stack.
 
 Install with
 ```
@@ -14,6 +19,12 @@ stack install
 ```
 
 Once installed launch with `tape`.
+
+## Cassette interface
+
+Each tape is displayed as a cassette widget. Two reels flank a tape window: the left reel fills
+as you write, the right reel depletes, and the hub animates on every keypress. A stats line inside
+the tape window shows your timer and word count.
 
 ## Timed sessions
 
@@ -23,9 +34,23 @@ Start a timed session with the `-t` flag followed by the number of minutes:
 tape -t 10
 ```
 
-A countdown timer appears at the top of the screen in green. When time expires it turns red and displays "Time's up!"
-The session keeps running so you can finish your thought. It's more of a way to help reach a minimum amount
-of time writing. Press `Esc` to quit as usual.
+A countdown timer appears inside each cassette in green. When time expires it turns red.
+The session keeps running so you can finish your thought. Press `Esc` to quit as usual.
+
+## Word goal
+
+Set a word-count target with the `-w` flag:
+
+```
+tape -w 500
+```
+
+Your current word count and the goal display inside the cassette stats line (`47 / 500`).
+Combine both flags to show timer and word count together:
+
+```
+tape -t 10 -w 500
+```
 
 ## Releasing a new version
 
@@ -57,6 +82,6 @@ be able to view them that way.
 
 ### Tapes return to the beginning after fixed number of characters so you can review what you
 
-### Decoration of the Deck
-The tape are in a tape deck. Add some unicode to make it look like that.
-Show a little picture of a turning cassette so the user can see where to go next or where they are in the tape.
+### Customise the hub animation
+The reel hub animation frames are defined in a top-level constant `reelFrames` in `app/Main.hs`.
+Edit the list of `(leftSpokeChar, rightSpokeChar)` pairs to change the look; list length controls speed.

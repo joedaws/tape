@@ -1,16 +1,14 @@
 -- | Multiple cassette tapes in a deck
-module Deck (tapeWidth) where
+module Deck (tapeWidth, tapeWindowWidth, cassetteRows) where
 
-makeOdd :: Int -> Int
-makeOdd n
-  | n <= 0 = 1
-  | even n = n - 1
-  | otherwise = n
+-- | Fixed width of the tape text window (must be odd for cursor centering)
+tapeWindowWidth :: Int
+tapeWindowWidth = 37
 
--- Total width
+-- | Number of rows each cassette widget occupies
+cassetteRows :: Int
+cassetteRows = 11
+
+-- | Width of the tape text region (argument ignored; kept for API compat)
 tapeWidth :: Int -> Int
-tapeWidth windowWidth =
-  makeOdd $ max 1 (windowWidth - labelWidth)
-  where
-    -- Rough estimate of label + spacing
-    labelWidth = 10 -- tune this until it feels right
+tapeWidth _ = tapeWindowWidth
