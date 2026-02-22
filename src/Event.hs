@@ -37,7 +37,7 @@ import qualified Brick.Main as M
 import qualified Brick.Types as T
 import Data.Char (isPrint)
 import qualified Data.Text as DT
-import Deck (cassetteRows, tapeWidth)
+import Deck (tapeRows, tapeWidth)
 import qualified Graphics.Vty as V
 import Lens.Micro ((.~), (%~))
 import Lens.Micro.Mtl
@@ -73,12 +73,12 @@ keyDelete      :: V.Key;  keyDelete      = V.KDel
 keyCursorLeft  :: V.Key;  keyCursorLeft  = V.KLeft
 keyCursorRight :: V.Key;  keyCursorRight = V.KRight
 
--- Screen capacity
+-- Screen capacity: top separators per tape + bottom sep + reel stats + status + help
 uiOverheadRows :: Int
-uiOverheadRows = 2
+uiOverheadRows = 4
 
 calcMaxTapes :: Int -> Int
-calcMaxTapes termH = max 1 ((termH - uiOverheadRows) `div` cassetteRows)
+calcMaxTapes termH = max 1 ((termH - uiOverheadRows) `div` tapeRows)
 
 -- | Word count for a tape
 wordCountTape :: Tape -> Int

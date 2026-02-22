@@ -17,11 +17,11 @@ spec = do
     it "returns 1 for a very short terminal" $
       calcMaxTapes 5 `shouldBe` 1
     it "returns correct value for height 24" $
-      -- (24 - 2) `div` 11 = 2
-      calcMaxTapes 24 `shouldBe` 2
+      -- (24 - 4) `div` 2 = 10
+      calcMaxTapes 24 `shouldBe` 10
     it "returns correct value for height 40" $
-      -- (40 - 2) `div` 11 = 3
-      calcMaxTapes 40 `shouldBe` 3
+      -- (40 - 4) `div` 2 = 18
+      calcMaxTapes 40 `shouldBe` 18
 
   describe "addTapeToSt" $ do
     it "adds a tape below existing ones" $

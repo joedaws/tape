@@ -1,14 +1,10 @@
--- | Multiple cassette tapes in a deck
-module Deck (tapeWidth, tapeWindowWidth, cassetteRows) where
+-- | Multiple tapes in a deck
+module Deck (tapeWidth, tapeRows) where
 
--- | Fixed width of the tape text window (must be odd for cursor centering)
-tapeWindowWidth :: Int
-tapeWindowWidth = 37
+-- | Number of rows each tape widget occupies (separator + text)
+tapeRows :: Int
+tapeRows = 2
 
--- | Number of rows each cassette widget occupies
-cassetteRows :: Int
-cassetteRows = 11
-
--- | Width of the tape text region (argument ignored; kept for API compat)
+-- | Width of the tape text region (terminal width minus side padding)
 tapeWidth :: Int -> Int
-tapeWidth _ = tapeWindowWidth
+tapeWidth w = max 20 (w - 2)

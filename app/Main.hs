@@ -10,10 +10,12 @@ import qualified Brick.Types as T
 import Brick.Util (on)
 import qualified Brick.Widgets.Center as C
 import Brick.Widgets.Core
-  ( hBox,
+  ( fill,
+    hBox,
     str,
     txt,
     vBox,
+    vLimit,
     withAttr,
   )
 import Control.Concurrent (forkIO, threadDelay)
@@ -21,7 +23,7 @@ import Control.Monad (forever, void)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as DT
 import qualified Data.Text.IO as TIO
-import Deck (tapeWidth, tapeWindowWidth)
+import Deck (tapeWidth)
 import Event
   ( AppEvent (..),
     Name (..),
@@ -43,7 +45,7 @@ import Lens.Micro ((&), (.~), (^.))
 import Lens.Micro.Mtl
 import qualified Render
 import System.Environment (getArgs)
-import Tape (Tape, leftText, printTape, tapeText, width)
+import Tape (Tape, initTape, leftText, printTape, tapeText, width)
 
 timerActiveAttr :: A.AttrName
 timerActiveAttr = A.attrName "timerActive"
@@ -59,24 +61,14 @@ hubFrames =
     '◑'
   ]
 
--- Another option for hubFrames
---  [ '⨂',
---   '⨁'
---  ]
-
--- | Fill pattern for a reel at a given fullness ratio (0.0 = empty, 1.0 = full).
--- Returns (topRow5, hubEndChar, bottomRow5).
-reelPattern :: Double -> (String, Char, String)
+-- | Fill pattern string for a reel at a given fullness ratio (0.0 = empty, 1.0 = full).
+reelPattern :: Double -> String
 reelPattern r
-  | r <= 0.00 = ("·····", '·', "·····")
-  | r <= 0.25 = ("·░░░·", '·', "·░░░·")
-  | r <= 0.50 = ("░░░░░", '░', "░░░░░")
-  | r <= 0.75 = ("▒▒▒▒▒", '▒', "▒▒▒▒▒")
-  | otherwise = ("▓▓▓▓▓", '▓', "▓▓▓▓▓")
-
--- | Build the hub row: [hubEnd, spokeL, '○', spokeR, hubEnd]
-buildHubRow :: Char -> Char -> String
-buildHubRow e s = [e, ' ', s, ' ', e]
+  | r <= 0.00 = "·····"
+  | r <= 0.25 = "·░░░·"
+  | r <= 0.50 = "░░░░░"
+  | r <= 0.75 = "▒▒▒▒▒"
+  | otherwise = "▓▓▓▓▓"
 
 -- | Cursor position ratio: 0.0 = start, 1.0 = end.
 cursorRatio :: Tape -> Double
@@ -85,90 +77,56 @@ cursorRatio t =
       total = DT.length (tapeText t)
    in fromIntegral l / fromIntegral (max 1 total)
 
--- | Format the 37-char stats string for the tape window row.
+-- | Format the session stats content (timer and/or word goal).
 formatStats :: St -> Int -> String
-formatStats st wc =
+formatStats st totalWc =
   case (st ^. timerSecs, st ^. wordGoal) of
-    (Nothing, Nothing) -> replicate 17 '─' ++ " ◆ " ++ replicate 17 '─'
-    _ ->
-      let timerPart = case st ^. timerSecs of
-            Nothing -> ""
-            Just n -> pad (n `div` 60) ++ ":" ++ pad (n `mod` 60)
-          goalPart = case st ^. wordGoal of
-            Nothing -> ""
-            Just g -> show wc ++ " / " ++ show g
-          sep = case (st ^. timerSecs, st ^. wordGoal) of
-            (Just _, Just _) -> "  ·  "
-            _ -> ""
-          content = timerPart ++ sep ++ goalPart
-          padTotal = tapeWindowWidth - length content
-          padLeft = padTotal `div` 2
-          padRight = padTotal - padLeft
-       in if padTotal < 0
-            then take tapeWindowWidth content
-            else replicate padLeft ' ' ++ content ++ replicate padRight ' '
+    (Nothing, Nothing) -> "◆"
+    _ -> timerPart ++ sep ++ goalPart
   where
+    timerPart = case st ^. timerSecs of
+      Nothing -> ""
+      Just n -> pad (n `div` 60) ++ ":" ++ pad (n `mod` 60)
+    goalPart = case st ^. wordGoal of
+      Nothing -> ""
+      Just g -> show totalWc ++ " / " ++ show g
+    sep = case (st ^. timerSecs, st ^. wordGoal) of
+      (Just _, Just _) -> "  ·  "
+      _ -> ""
     pad x = (if x < 10 then "0" else "") ++ show x
 
-drawCassette :: Bool -> St -> Int -> Tape -> T.Widget Name
-drawCassette isFocused st idx tape =
+-- | Draw a single tape: top separator + text line.
+drawTapeRow :: Bool -> Tape -> T.Widget Name
+drawTapeRow isFocused tape =
   vBox
-    [ str row1,
-      str row2,
-      str row3,
-      str row4,
-      str row5,
-      str row6,
-      str row7,
-      row8Widget,
-      row9Widget,
-      str row10,
-      str row11
+    [ vLimit 1 (fill (if isFocused then '═' else '─')),
+      hBox [str " ", Render.renderTapeText [Render.edgeFadeEffect] isFocused (printTape tape), str " "]
     ]
+
+-- | Draw the reel indicator + session stats bar.
+drawReelStats :: St -> T.Widget Name
+drawReelStats st =
+  hBox [str lStr, C.hCenter statsWidget, str rStr]
   where
-    hub = hubFrames !! (st ^. reelRotation `mod` length hubFrames)
+    ts = st ^. tapes
+    focused = st ^. focusIdx
+    tape = if null ts then initTape "" 0 else ts !! min focused (length ts - 1)
     ratio = cursorRatio tape
-    (lTop, lEnd, lBot) = reelPattern ratio
-    (rTop, rEnd, rBot) = reelPattern (1.0 - ratio)
-    lHub = buildHubRow lEnd hub
-    rHub = buildHubRow rEnd hub
-    wc = wordCountTape tape
-
-    row1 = "╭" ++ replicate 61 '─' ++ "╮"
-    row2 = "│ ┌" ++ replicate 55 '─' ++ "┐   │"
-    row3 = "│ │  ♩  " ++ take 50 ("Tape " ++ show (idx + 1) ++ replicate 50 ' ') ++ "│   │"
-    row4 = "│ └" ++ replicate 55 '─' ++ "┘   │"
-    row5 = "│" ++ replicate 61 ' ' ++ "│"
-    row6 = "│ ╭─────╮" ++ replicate 43 ' ' ++ "╭─────╮   │"
-    row7 = "│ │" ++ lTop ++ "├──╔" ++ replicate 37 '═' ++ "╗──┤" ++ rTop ++ "│   │"
-    row10 = "│ ╰─────╯  ╚" ++ replicate 37 '═' ++ "╝  ╰─────╯   │"
-    row11 = "╰" ++ replicate 61 '─' ++ "╯"
-
-    statsStr = formatStats st wc
+    hub = hubFrames !! (st ^. reelRotation `mod` length hubFrames)
+    lStr = hub : reelPattern ratio
+    rStr = reelPattern (1.0 - ratio) ++ [hub]
+    totalWc = sum (map wordCountTape ts)
+    content = formatStats st totalWc
     statsWidget = case st ^. timerSecs of
-      Just 0 -> withAttr timerExpiredAttr (str statsStr)
-      Just _ -> withAttr timerActiveAttr (str statsStr)
-      Nothing -> str statsStr
-
-    row8Widget =
-      hBox
-        [ str ("│ │" ++ lHub ++ "│  ║"),
-          statsWidget,
-          str ("║  │" ++ rHub ++ "│   │")
-        ]
-
-    row9Widget =
-      hBox
-        [ str ("│ │" ++ lBot ++ "├──║"),
-          Render.renderTapeText [Render.edgeFadeEffect] isFocused (printTape tape),
-          str ("║──┤" ++ rBot ++ "│   │")
-        ]
+      Just 0 -> withAttr timerExpiredAttr (str content)
+      Just _ -> withAttr timerActiveAttr (str content)
+      Nothing -> str content
 
 drawUI :: St -> [T.Widget Name]
-drawUI st = [C.center $ vBox $ tapeWidgets ++ [statusRow, txt " ", txt helpText]]
+drawUI st = [vBox $ tapeWidgets ++ [vLimit 1 (fill '─'), drawReelStats st, statusRow, txt helpText]]
   where
     focused = st ^. focusIdx
-    tapeWidgets = zipWith (\i t -> drawCassette (i == focused) st i t) [0 ..] (st ^. tapes)
+    tapeWidgets = zipWith (\i t -> drawTapeRow (i == focused) t) [0 ..] (st ^. tapes)
     statusRow = maybe (txt " ") txt (st ^. statusMsg)
 
 helpText :: DT.Text
