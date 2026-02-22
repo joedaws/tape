@@ -11,11 +11,9 @@ import Brick.Util (on)
 import qualified Brick.Widgets.Center as C
 import Brick.Widgets.Core
   ( hBox,
-    padLeft,
     txt,
     vBox,
     withAttr,
-    Padding (..),
   )
 import qualified Brick.Widgets.Edit as E
 import Control.Concurrent (forkIO, threadDelay)
@@ -36,6 +34,7 @@ import Event
     termHeight,
     timerSecs,
   )
+import qualified Render
 import qualified Graphics.Vty as V
 import qualified Graphics.Vty.CrossPlatform as VCP
 import Lens.Micro ((&), (.~), (^.))
@@ -55,9 +54,14 @@ drawUI st = [C.center $ vBox $ timerRow ++ tapeWidgets ++ [statusRow, txt " ", t
     focused     = st ^. focusIdx
     tapeWidgets = zipWith drawRow [0 ..] (st ^. tapes)
     drawRow i tape =
-      let attr  = if i == focused then E.editFocusedAttr else E.editAttr
-          label = DT.pack ("Tape " ++ show (i + 1) ++ ":")
-      in  withAttr attr $ hBox [txt label, padLeft (Pad 1) (txt (printTape tape))]
+      let isFocused = i == focused
+          attr      = if isFocused then E.editFocusedAttr else E.editAttr
+          label     = DT.pack ("Tape " ++ show (i + 1) ++ ":")
+      in  hBox
+            [ withAttr attr (txt label),
+              withAttr attr (txt " "),
+              Render.renderTapeText [Render.edgeFadeEffect] isFocused (printTape tape)
+            ]
     statusRow = maybe (txt " ") txt (st ^. statusMsg)
     timerRow  = case st ^. timerSecs of
       Nothing -> []

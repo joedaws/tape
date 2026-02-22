@@ -5,7 +5,7 @@ cabal-version: 2.2
 -- see: https://github.com/sol/hpack
 
 name:           tape
-version:        0.2.0.0
+version:        0.3.0.0
 description:    Please see the README on GitHub at <https://github.com/joedaws/tape#readme>
 homepage:       https://github.com/joedaws/tape#readme
 bug-reports:    https://github.com/joedaws/tape/issues
@@ -28,6 +28,7 @@ library
       Deck
       Document
       Event
+      Render
       Tape
   other-modules:
       Paths_tape
